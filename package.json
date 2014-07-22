@@ -1,0 +1,13 @@
+{
+  "name": "ehnahce",
+  "description": "Easily update everything - git, npm, bower.",
+  "repository": "git://github.com/tcoats/enhance.git",
+  "version": "0.0.1",
+  "license": "MIT",
+  "bin": {
+    "enhance": "bin/enhance.js"
+  },
+  "dependencies": {
+    "colors": "~0.6.2"
+  }
+}
