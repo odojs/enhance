@@ -1,6 +1,6 @@
 require 'colors'
 exec = require('child_process').exec
-exists = require('fs').exists
+fs = require 'fs'
 
 _stderr = []
 recordstderr = (stderr) ->
@@ -34,7 +34,7 @@ cmd = (cmd, cb) ->
 
 gitpull = (dir, cb) -> cmd "cd #{dir} && git pull", cb
 trygit = (dir, cb) ->
-	exists "#{dir}/.git", (isthere) ->
+	fs.exists "#{dir}/.git", (isthere) ->
 		return cb() if !isthere
 		series [
 			(cb) -> gitpull dir, cb
@@ -46,7 +46,7 @@ npmupdate = (dir, cb) -> cmd "cd #{dir} && npm update --production", ->
 	console.log "   #{'npm\'d'.magenta}      #{dir}"
 	cb()
 trynpm = (dir, cb) ->
-	exists "#{dir}/package.json", (isthere) ->
+	fs.exists "#{dir}/package.json", (isthere) ->
 		if !isthere
 			return cb()
 		npmupdate dir, cb
@@ -56,7 +56,7 @@ bowerupdate = (dir, cb) -> cmd "cd #{dir} && bower update", ->
 	console.log "   #{'bower\'d'.green}    #{dir}"
 	cb()
 trybower = (dir, cb) ->
-	exists "#{dir}/bower.json", (isthere) ->
+	fs.exists "#{dir}/bower.json", (isthere) ->
 		return cb() if !isthere
 		series [
 			(cb) -> bowerinstall dir, cb
@@ -74,15 +74,7 @@ trydirectory = (dir, cb) ->
 		], cb
 	], cb
 
-console.log()
-parallel [
-	(cb) -> trydirectory 'identity-management', cb
-	(cb) -> trydirectory 'user-management', cb
-	(cb) -> trydirectory 'under-keel-clearance', cb
-	(cb) -> trydirectory 'forecasting', cb
-	(cb) -> trydirectory 'berth-safety-forecast', cb
-	(cb) -> trydirectory 'ui-assets', cb
-], ->
+fin =  ->
 	#for stderr in _stderr
 	#	console.error stderr
 	console.log()
@@ -91,3 +83,16 @@ parallel [
 	else
 		console.log '   fin.'.cyan
 	console.log()
+
+trydirectory '.', ->
+	fs.readdir '.', (err, files) ->
+		throw err if err?
+		tasks = []
+		for file in files
+			do  (file) ->
+				tasks.push (cb) ->
+					fs.stat file, (err, stat) ->
+						throw err if err?
+						trydirectory file, cb if stat.isDirectory()
+		
+		parallel tasks, fin
