@@ -4,24 +4,31 @@ fs = require 'fs'
 
 args = process.argv.slice 2
 
+usage = """
+
+   Usage: #{'enhance'.cyan} [<commands>]
+
+   Default commands: (these run if no commands are specified)
+   
+     pull      #{'git pull'.blue}
+     npm       #{'npm update --production'.blue}
+     bower     #{'bower update'.blue}
+    
+   Optional commands:
+     push      #{'git push'.blue}
+     status    #{'git status -s --porcelain'.blue}
+               #{'git diff --stat origin/master HEAD'.blue}
+   
+"""
+
 for arg in args
   unless arg in ['pull', 'push', 'bower', 'npm', 'status']
-    console.error """
-    
-       Usage: #{'enhance'.cyan} [<commands>]
-    
-       Default commands: (these run if no commands are specified)
-       
-         pull      #{'git pull'.blue}
-         npm       #{'npm update --production'.blue}
-         bower     #{'bower update'.blue}
-        
-       Optional commands:
-         push      #{'git push'.blue}
-         status    #{'git status -s --porcelain'.blue}
-       
-    """
+    console.error usage
     process.exit 1
+
+if 'status' in args and args.length isnt 1
+  console.error usage
+  process.exit 1
 
 _stderr = []
 recordstderr = (stderr) ->
@@ -76,9 +83,7 @@ trygit = (dir, cb) ->
     return cb() if !isthere
     tasks = []
     if args.length is 0 or 'pull' in args
-      tasks.push (cb) -> gitpull dir, ->
-        console.log "   #{'pull\'d'.blue}     #{dir}"
-        cb()
+      tasks.push (cb) -> gitpull dir, cb
     if 'push' in args
       tasks.push (cb) -> gitpush dir, cb
     series tasks, cb
@@ -94,15 +99,23 @@ gitmeaning =
 
 gitstatus = (dir, cb) ->
   cmd "cd #{dir} && git status -s --porcelain", cb
+gitfetch = (dir, cb) ->
+  cmd "cd #{dir} && git fetch", cb
+gittopush = (dir, cb) ->
+  cmd "cd #{dir} && git diff --stat origin/master HEAD", cb
+gittopull = (dir, cb) ->
+  cmd "cd #{dir} && git diff --stat ...origin", cb
 trygitstatus = (dir, cb) ->
   fs.exists "#{dir}/.git", (isthere) ->
     return cb() if !isthere
+    results = ["   #{dir.blue}"]
     series [
+      (cb) -> gitfetch dir, cb
       (cb) -> gitstatus dir, (status) ->
-        console.log "   #{dir.blue}"
         return cb() if !status? or status is ''
+        lines = status.split '\n'
         groups = {}
-        for line in status.split '\n'
+        for line in lines
           code = line.substr 0, 2
           continue if code is ''
           groups[code] = 0 if !groups[code]?
@@ -112,9 +125,24 @@ trygitstatus = (dir, cb) ->
             "#{count} #{gitmeaning[type]}"
           else
             "#{type}:#{count}"
-        console.log "   #{result.join ' '}"
+        results.push "     #{'local:'.green}    #{lines.length} files changed, #{result.join ' '}"
+        cb()
+      (cb) -> gittopush dir, (status) ->
+        return cb() if !status? or status is ''
+        status = status.split('\n')
+        status.pop()
+        status = status.pop()
+        results.push "     #{'to push:'.green}  #{status}"
+        cb()
+      (cb) -> gittopull dir, (status) ->
+        return cb() if !status? or status is ''
+        status = status.split('\n')
+        status.pop()
+        status = status.pop()
+        results.push "     #{'to pull:'.green}  #{status}"
         cb()
     ], ->
+      console.log results.join '\n'
       cb()
 
 npmupdate = (dir, cb) -> cmd "cd #{dir} && npm update --production", ->
@@ -168,20 +196,6 @@ fin =  ->
   console.log()
 
 console.log()
-if 'status' in args and args.length isnt 1
-  console.error """
-  
-     Usage: #{'enhance'.cyan} [<types>]
-  
-     Types:
-     
-       git       #{'git pull'.blue}
-       npm       #{'npm update --production'.blue}
-       bower     #{'bower update'.blue}
-       status    #{'git status -s --porcelain'.blue}
-     
-  """
-  process.exit 1
 
 trydirectory '.', ->
   fs.readdir '.', (err, files) ->
