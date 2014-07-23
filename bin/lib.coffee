@@ -5,7 +5,7 @@ fs = require 'fs'
 args = process.argv.slice 2
 
 for arg in args
-  unless arg in ['git', 'bower', 'npm']
+  unless arg in ['git', 'bower', 'npm', 'status']
     console.error """
     
        Usage: #{'enhance'.cyan} [<types>]
@@ -15,6 +15,7 @@ for arg in args
          git       #{'git pull'.blue}
          npm       #{'npm update --production'.blue}
          bower     #{'bower update'.blue}
+         status    #{'git status -s --porcelain'.blue}
        
     """
     process.exit 1
@@ -51,7 +52,7 @@ cmd = (cmd, cb) ->
       console.error "Issue running #{cmd}"
       throw err
     recordstderr stderr if stderr? and stderr isnt ''
-    cb()
+    cb stdout
 
 gitpull = (dir, cb) -> cmd "cd #{dir} && git pull", cb
 trygit = (dir, cb) ->
@@ -61,6 +62,40 @@ trygit = (dir, cb) ->
       (cb) -> gitpull dir, cb
     ], ->
       console.log "   #{'git\'d'.blue}      #{dir}"
+      cb()
+
+gitmeaning =
+  ' M': 'modified'
+  ' A': 'added'
+  ' D': 'deleted'
+  ' R': 'renamed'
+  ' C': 'copied'
+  '??': 'untracked'
+  '!!': 'ignored'
+
+gitstatus = (dir, cb) ->
+  cmd "cd #{dir} && git status -s --porcelain", cb
+trygitstatus = (dir, cb) ->
+  fs.exists "#{dir}/.git", (isthere) ->
+    return cb() if !isthere
+    series [
+      (cb) -> gitstatus dir, (status) ->
+        console.log "   #{dir.blue}"
+        return cb() if !status? or status is ''
+        groups = {}
+        for line in status.split '\n'
+          code = line.substr 0, 2
+          continue if code is ''
+          groups[code] = 0 if !groups[code]?
+          groups[code]++
+        result = for type, count of groups
+          if gitmeaning[type]?
+            "#{count} #{gitmeaning[type]}"
+          else
+            "#{type}:#{count}"
+        console.log "   #{result.join ' '}"
+        cb()
+    ], ->
       cb()
 
 npmupdate = (dir, cb) -> cmd "cd #{dir} && npm update --production", ->
@@ -87,6 +122,8 @@ trydirectory = (dir, cb) ->
   tasks = []
   if args.length is 0 or 'git' in args
     tasks.push (cb) -> trygit dir, cb
+  if 'status' in args
+    tasks.push (cb) -> trygitstatus dir, cb
     
   next = []
   if args.length is 0 or 'npm' in args
@@ -112,6 +149,21 @@ fin =  ->
   console.log()
 
 console.log()
+if 'status' in args and args.length isnt 1
+  console.error """
+  
+     Usage: #{'enhance'.cyan} [<types>]
+  
+     Types:
+     
+       git       #{'git pull'.blue}
+       npm       #{'npm update --production'.blue}
+       bower     #{'bower update'.blue}
+       status    #{'git status -s --porcelain'.blue}
+     
+  """
+  process.exit 1
+
 trydirectory '.', ->
   fs.readdir '.', (err, files) ->
     throw err if err?
