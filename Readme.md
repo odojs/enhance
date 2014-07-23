@@ -1,5 +1,5 @@
 # enhance
-Easily update everything - git, npm, bower.
+Easily update everything - git, npm, bower
 
 ## Installation
     $ npm install -g tcoats/enhance
