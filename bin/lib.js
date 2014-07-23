@@ -11,7 +11,7 @@
 
   args = process.argv.slice(2);
 
-  usage = "\nUsage: " + 'enhance'.cyan + " [<commands>]\n\nDefault commands: (these run if no commands are specified)\n\n  pull      " + 'git pull'.blue + "\n  npm       " + 'npm update --production'.blue + "\n  bower     " + 'bower update'.blue + "\n \nOptional commands:\n  push      " + 'git push'.blue + "\n  status    " + 'git status -s --porcelain'.blue + "\n            " + 'git diff --stat origin/master HEAD'.blue + "\n";
+  usage = "\n   Usage: " + 'enhance'.cyan + " [<commands>]\n   \n   Default commands: (these run if no commands are specified)\n\n      pull      " + 'git pull'.blue + "\n      npm       " + 'npm update --production'.blue + "\n      bower     " + 'bower update'.blue + "\n \n   Optional commands:\n\n      push      " + 'git push'.blue + "\n      status    " + 'git fetch'.blue + "\n                " + 'git status -s --porcelain'.blue + "\n                " + 'git diff --stat origin/master HEAD'.blue + "\n                " + 'git diff --stat ...origin'.blue + "\n";
 
   for (_i = 0, _len = args.length; _i < _len; _i++) {
     arg = args[_i];
@@ -168,7 +168,7 @@
       if (!isthere) {
         return cb();
       }
-      results = ["   " + dir.blue];
+      results = [];
       return series([
         function(cb) {
           return gitfetch(dir, cb);
@@ -204,7 +204,7 @@
               }
               return _results;
             })();
-            results.push("     " + 'local:'.green + "    " + lines.length + " files changed, " + (result.join(' ')));
+            results.push("     " + 'local:'.magenta + "    " + lines.length + " files changed, " + (result.join(' ')));
             return cb();
           });
         }, function(cb) {
@@ -215,7 +215,7 @@
             status = status.split('\n');
             status.pop();
             status = status.pop();
-            results.push("     " + 'to push:'.green + "  " + status);
+            results.push("     " + 'to push:'.magenta + "  " + (status.trim()));
             return cb();
           });
         }, function(cb) {
@@ -226,12 +226,17 @@
             status = status.split('\n');
             status.pop();
             status = status.pop();
-            results.push("     " + 'to pull:'.green + "  " + status);
+            results.push("     " + 'to pull:'.magenta + "  " + status);
             return cb();
           });
         }
       ], function() {
-        console.log(results.join('\n'));
+        if (results.length === 0) {
+          console.log(" " + '√'.green + " " + dir.blue);
+        } else {
+          console.log(" " + 'X'.red + " " + dir.red + " has changes");
+          console.log(results.join('\n'));
+        }
         return cb();
       });
     });

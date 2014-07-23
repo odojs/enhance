@@ -6,18 +6,21 @@ args = process.argv.slice 2
 
 usage = """
 
-   Usage: #{'enhance'.cyan} [<commands>]
-
-   Default commands: (these run if no commands are specified)
+      Usage: #{'enhance'.cyan} [<commands>]
+      
+      Default commands: (these run if no commands are specified)
    
-     pull      #{'git pull'.blue}
-     npm       #{'npm update --production'.blue}
-     bower     #{'bower update'.blue}
+         pull      #{'git pull'.blue}
+         npm       #{'npm update --production'.blue}
+         bower     #{'bower update'.blue}
     
-   Optional commands:
-     push      #{'git push'.blue}
-     status    #{'git status -s --porcelain'.blue}
-               #{'git diff --stat origin/master HEAD'.blue}
+      Optional commands:
+   
+         push      #{'git push'.blue}
+         status    #{'git fetch'.blue}
+                   #{'git status -s --porcelain'.blue}
+                   #{'git diff --stat origin/master HEAD'.blue}
+                   #{'git diff --stat ...origin'.blue}
    
 """
 
@@ -108,7 +111,7 @@ gittopull = (dir, cb) ->
 trygitstatus = (dir, cb) ->
   fs.exists "#{dir}/.git", (isthere) ->
     return cb() if !isthere
-    results = ["   #{dir.blue}"]
+    results = []
     series [
       (cb) -> gitfetch dir, cb
       (cb) -> gitstatus dir, (status) ->
@@ -125,24 +128,28 @@ trygitstatus = (dir, cb) ->
             "#{count} #{gitmeaning[type]}"
           else
             "#{type}:#{count}"
-        results.push "     #{'local:'.green}    #{lines.length} files changed, #{result.join ' '}"
+        results.push "     #{'local:'.magenta}    #{lines.length} files changed, #{result.join ' '}"
         cb()
       (cb) -> gittopush dir, (status) ->
         return cb() if !status? or status is ''
         status = status.split('\n')
         status.pop()
         status = status.pop()
-        results.push "     #{'to push:'.green}  #{status}"
+        results.push "     #{'to push:'.magenta}  #{status.trim()}"
         cb()
       (cb) -> gittopull dir, (status) ->
         return cb() if !status? or status is ''
         status = status.split('\n')
         status.pop()
         status = status.pop()
-        results.push "     #{'to pull:'.green}  #{status}"
+        results.push "     #{'to pull:'.magenta}  #{status}"
         cb()
     ], ->
-      console.log results.join '\n'
+      if results.length is 0
+        console.log " #{'√'.green} #{dir.blue}"
+      else
+        console.log " #{'X'.red} #{dir.red} has changes"
+        console.log results.join '\n'
       cb()
 
 npmupdate = (dir, cb) -> cmd "cd #{dir} && npm update --production", ->
