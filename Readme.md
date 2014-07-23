@@ -7,7 +7,7 @@ Easily update everything - git, npm, bower.
 ## Usage
     $ enhance
     
-      . git'd
+      . pull'd
       . npm'd
       . bower'd
       
