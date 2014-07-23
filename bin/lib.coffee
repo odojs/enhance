@@ -5,16 +5,19 @@ fs = require 'fs'
 args = process.argv.slice 2
 
 for arg in args
-  unless arg in ['git', 'bower', 'npm', 'status']
+  unless arg in ['pull', 'push', 'bower', 'npm', 'status']
     console.error """
     
-       Usage: #{'enhance'.cyan} [<types>]
+       Usage: #{'enhance'.cyan} [<commands>]
     
-       Types:
+       Default commands: (these run if no commands are specified)
        
-         git       #{'git pull'.blue}
+         pull      #{'git pull'.blue}
          npm       #{'npm update --production'.blue}
          bower     #{'bower update'.blue}
+        
+       Optional commands:
+         push      #{'git push'.blue}
          status    #{'git status -s --porcelain'.blue}
        
     """
@@ -54,15 +57,31 @@ cmd = (cmd, cb) ->
     recordstderr stderr if stderr? and stderr isnt ''
     cb stdout
 
-gitpull = (dir, cb) -> cmd "cd #{dir} && git pull", cb
+gitpull = (dir, cb) -> exec  "cd #{dir} && git pull", (err, stdout, stderr) ->
+  if err?
+    console.log "   Can't #{'pull'.blue} #{dir}"
+  else
+    console.log "   #{'pull\'d'.blue}     #{dir}"
+  return cb()
+
+gitpush = (dir, cb) -> exec  "cd #{dir} && git push", (err, stdout, stderr) ->
+  if err?
+    console.log "   Can't #{'push'.blue} #{dir}"
+  else
+    console.log "   #{'push\'d'.blue}     #{dir}"
+  return cb()
+  
 trygit = (dir, cb) ->
   fs.exists "#{dir}/.git", (isthere) ->
     return cb() if !isthere
-    series [
-      (cb) -> gitpull dir, cb
-    ], ->
-      console.log "   #{'git\'d'.blue}      #{dir}"
-      cb()
+    tasks = []
+    if args.length is 0 or 'pull' in args
+      tasks.push (cb) -> gitpull dir, ->
+        console.log "   #{'pull\'d'.blue}     #{dir}"
+        cb()
+    if 'push' in args
+      tasks.push (cb) -> gitpush dir, cb
+    series tasks, cb
 
 gitmeaning =
   ' M': 'modified'
@@ -120,7 +139,7 @@ trybower = (dir, cb) ->
 
 trydirectory = (dir, cb) ->
   tasks = []
-  if args.length is 0 or 'git' in args
+  if args.length is 0 or 'push' in args or 'pull' in args
     tasks.push (cb) -> trygit dir, cb
   if 'status' in args
     tasks.push (cb) -> trygitstatus dir, cb
