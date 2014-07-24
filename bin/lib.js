@@ -204,7 +204,7 @@
               }
               return _results;
             })();
-            results.push("     " + 'local:'.magenta + "    " + lines.length + " files changed, " + (result.join(' ')));
+            results.push("   " + 'local:'.magenta + "    " + lines.length + " files changed, " + (result.join(' ')));
             return cb();
           });
         }, function(cb) {
@@ -215,7 +215,7 @@
             status = status.split('\n');
             status.pop();
             status = status.pop();
-            results.push("     " + 'to push:'.magenta + "  " + (status.trim()));
+            results.push("   " + 'to push:'.magenta + "  " + (status.trim()));
             return cb();
           });
         }, function(cb) {
@@ -226,7 +226,7 @@
             status = status.split('\n');
             status.pop();
             status = status.pop();
-            results.push("     " + 'to pull:'.magenta + "  " + status);
+            results.push("   " + 'to pull:'.magenta + "  " + status);
             return cb();
           });
         }

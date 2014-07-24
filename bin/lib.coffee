@@ -128,21 +128,21 @@ trygitstatus = (dir, cb) ->
             "#{count} #{gitmeaning[type]}"
           else
             "#{type}:#{count}"
-        results.push "     #{'local:'.magenta}    #{lines.length} files changed, #{result.join ' '}"
+        results.push "   #{'local:'.magenta}    #{lines.length} files changed, #{result.join ' '}"
         cb()
       (cb) -> gittopush dir, (status) ->
         return cb() if !status? or status is ''
         status = status.split('\n')
         status.pop()
         status = status.pop()
-        results.push "     #{'to push:'.magenta}  #{status.trim()}"
+        results.push "   #{'to push:'.magenta}  #{status.trim()}"
         cb()
       (cb) -> gittopull dir, (status) ->
         return cb() if !status? or status is ''
         status = status.split('\n')
         status.pop()
         status = status.pop()
-        results.push "     #{'to pull:'.magenta}  #{status}"
+        results.push "   #{'to pull:'.magenta}  #{status}"
         cb()
     ], ->
       if results.length is 0
