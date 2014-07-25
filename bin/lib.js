@@ -155,7 +155,9 @@
   };
 
   gittopush = function(dir, cb) {
-    return cmd("cd " + dir + " && git diff --stat origin/master HEAD", cb);
+    return cmd("cd " + dir + " && git symbolic-ref --short -q HEAD", function(branch) {
+      return cmd("cd " + dir + " && git diff --stat origin/" + (branch.trim()) + " HEAD", cb);
+    });
   };
 
   gittopull = function(dir, cb) {

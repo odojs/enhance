@@ -105,7 +105,8 @@ gitstatus = (dir, cb) ->
 gitfetch = (dir, cb) ->
   cmd "cd #{dir} && git fetch", cb
 gittopush = (dir, cb) ->
-  cmd "cd #{dir} && git diff --stat origin/master HEAD", cb
+  cmd "cd #{dir} && git symbolic-ref --short -q HEAD", (branch) ->
+    cmd "cd #{dir} && git diff --stat origin/#{branch.trim()} HEAD", cb
 gittopull = (dir, cb) ->
   cmd "cd #{dir} && git diff --stat ...origin", cb
 trygitstatus = (dir, cb) ->
