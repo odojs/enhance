@@ -295,18 +295,18 @@
   trydirectory = function(dir, cb) {
     var next, tasks;
     tasks = [];
-    if (args.length === 0 || __indexOf.call(args, 'push') >= 0 || __indexOf.call(args, 'pull') >= 0) {
+    if (__indexOf.call(args, 'push') >= 0 || __indexOf.call(args, 'pull') >= 0) {
       tasks.push(function(cb) {
         return trygit(dir, cb);
       });
     }
-    if (__indexOf.call(args, 'status') >= 0) {
+    if (args.length === 0 || __indexOf.call(args, 'status') >= 0) {
       tasks.push(function(cb) {
         return trygitstatus(dir, cb);
       });
     }
     next = [];
-    if (args.length === 0 || __indexOf.call(args, 'npm') >= 0) {
+    if (__indexOf.call(args, 'npm') >= 0) {
       next.push(function(cb) {
         return trynpm(dir, cb);
       });
@@ -314,7 +314,7 @@
         return trynpm("" + dir + "/web", cb);
       });
     }
-    if (args.length === 0 || __indexOf.call(args, 'bower') >= 0) {
+    if (__indexOf.call(args, 'bower') >= 0) {
       next.push(function(cb) {
         return trybower(dir, cb);
       });

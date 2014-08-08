@@ -180,17 +180,17 @@ trybower = (dir, cb) ->
 
 trydirectory = (dir, cb) ->
   tasks = []
-  if args.length is 0 or 'push' in args or 'pull' in args
+  if 'push' in args or 'pull' in args
     tasks.push (cb) -> trygit dir, cb
-  if 'status' in args
+  if args.length is 0 or 'status' in args
     tasks.push (cb) -> trygitstatus dir, cb
     
   next = []
-  if args.length is 0 or 'npm' in args
+  if 'npm' in args
     next.push (cb) -> trynpm dir, cb
     next.push (cb) -> trynpm "#{dir}/web", cb
   
-  if args.length is 0 or 'bower' in args
+  if 'bower' in args
     next.push (cb) -> trybower dir, cb
     next.push (cb) -> trybower "#{dir}/web", cb
   
