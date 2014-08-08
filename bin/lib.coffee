@@ -113,6 +113,7 @@ trygitstatus = (dir, cb) ->
   fs.exists "#{dir}/.git", (isthere) ->
     return cb() if !isthere
     results = []
+    toPull = no
     series [
       (cb) -> gitfetch dir, cb
       (cb) -> gitstatus dir, (status) ->
@@ -144,12 +145,16 @@ trygitstatus = (dir, cb) ->
         status.pop()
         status = status.pop()
         results.push "   #{'to pull:'.magenta}  #{status}"
+        toPull = yes
         cb()
     ], ->
       if results.length is 0
         console.log " #{'√'.green} #{dir.blue}"
       else
-        console.log " #{'X'.red} #{dir.red} has changes"
+        if toPull?
+          console.log " #{'X'.red} #{dir.red} is not up to date"
+        else
+          console.log " #{'X'.yellow} #{dir.yellow} has changes"
         console.log results.join '\n'
       cb()
 

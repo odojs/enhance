@@ -166,11 +166,12 @@
 
   trygitstatus = function(dir, cb) {
     return fs.exists("" + dir + "/.git", function(isthere) {
-      var results;
+      var results, toPull;
       if (!isthere) {
         return cb();
       }
       results = [];
+      toPull = false;
       return series([
         function(cb) {
           return gitfetch(dir, cb);
@@ -229,6 +230,7 @@
             status.pop();
             status = status.pop();
             results.push("   " + 'to pull:'.magenta + "  " + status);
+            toPull = true;
             return cb();
           });
         }
@@ -236,7 +238,11 @@
         if (results.length === 0) {
           console.log(" " + '√'.green + " " + dir.blue);
         } else {
-          console.log(" " + 'X'.red + " " + dir.red + " has changes");
+          if (toPull != null) {
+            console.log(" " + 'X'.red + " " + dir.red + " is not up to date");
+          } else {
+            console.log(" " + 'X'.yellow + " " + dir.yellow + " has changes");
+          }
           console.log(results.join('\n'));
         }
         return cb();
