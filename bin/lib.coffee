@@ -8,24 +8,26 @@ usage = """
 
       Usage: #{'enhance'.cyan} [<commands>]
       
-      Default commands: (these run if no commands are specified)
+      Default command: (this will run if no commands are specified)
    
-         pull      #{'git pull'.blue}
-         npm       #{'npm update --production'.blue}
-         bower     #{'bower update'.blue}
-    
-      Optional commands:
-   
-         push      #{'git push'.blue}
          status    #{'git fetch'.blue}
                    #{'git status -s --porcelain'.blue}
                    #{'git diff --stat origin/master HEAD'.blue}
                    #{'git diff --stat ...origin'.blue}
+    
+      Additional commands:
+   
+         push      #{'git push'.blue}
+         pull      #{'git pull'.blue}
+         npm       #{'npm update --production'.blue}
+         nukenpm   #{'rm -rf node_modules'.blue}
+         bower     #{'bower update'.blue}
+         nukebower #{'rm -rf bower_components'.blue}
    
 """
 
 for arg in args
-  unless arg in ['pull', 'push', 'bower', 'npm', 'status']
+  unless arg in ['pull', 'push', 'bower', 'npm', 'status', 'nukenpm', 'nukebower']
     console.error usage
     process.exit 1
 
@@ -165,6 +167,22 @@ trynpm = (dir, cb) ->
   fs.exists "#{dir}/package.json", (isthere) ->
     return cb() if !isthere
     npmupdate dir, cb
+    
+nukenpm = (dir, cb) -> cmd "cd #{dir} && rm -rf node_modules", ->
+  console.log "   #{'npm nuke\'d'.magenta} #{dir}"
+  cb()
+trynukenpm = (dir, cb) ->
+  fs.exists "#{dir}/node_modules", (isthere) ->
+    return cb() if !isthere
+    nukenpm dir, cb
+    
+nukebower = (dir, cb) -> cmd "cd #{dir} && rm -rf bower_components", ->
+  console.log "   #{'bower nuke\'d'.magenta} #{dir}"
+  cb()
+trynukebower = (dir, cb) ->
+  fs.exists "#{dir}/bower_components", (isthere) ->
+    return cb() if !isthere
+    nukebower dir, cb
 
 bowerinstall = (dir, cb) -> cmd "cd #{dir} && bower install", cb
 bowerupdate = (dir, cb) -> cmd "cd #{dir} && bower update", ->
@@ -184,16 +202,19 @@ trydirectory = (dir, cb) ->
     tasks.push (cb) -> trygit dir, cb
   if args.length is 0 or 'status' in args
     tasks.push (cb) -> trygitstatus dir, cb
-    
+  
+  if 'nukenpm' in args
+    tasks.push (cb) -> trynukenpm dir, cb
+  if 'nukebower' in args
+    tasks.push (cb) -> trynukebower dir, cb
+  
   next = []
   if 'npm' in args
     next.push (cb) -> trynpm dir, cb
     next.push (cb) -> trynpm "#{dir}/web", cb
-  
   if 'bower' in args
     next.push (cb) -> trybower dir, cb
     next.push (cb) -> trybower "#{dir}/web", cb
-  
   tasks.push (cb) -> parallel next, cb
   
   series tasks, cb
