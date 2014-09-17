@@ -21,13 +21,14 @@ usage = """
          pull      #{'git pull'.blue}
          npm       #{'npm update --production'.blue}
          nukenpm   #{'rm -rf node_modules'.blue}
+         odo       #{'npm install odo@latest --save --force'}
          bower     #{'bower update'.blue}
          nukebower #{'rm -rf bower_components'.blue}
    
 """
 
 for arg in args
-  unless arg in ['pull', 'push', 'bower', 'npm', 'status', 'nukenpm', 'nukebower']
+  unless arg in ['pull', 'push', 'bower', 'npm', 'status', 'nukenpm', 'nukebower', 'odo']
     console.error usage
     process.exit 1
 
@@ -160,6 +161,13 @@ trygitstatus = (dir, cb) ->
         console.log results.join '\n'
       cb()
 
+odo = (dir, cb) -> cmd "cd #{dir} && npm install odo@latest --save --force", ->
+  console.log "   #{'odo\'d'.magenta}      #{dir}"
+  cb()
+tryodo = (dir, cb) ->
+  fs.exists "#{dir}/node_modules/odo", (isthere) ->
+    return cb() if !isthere
+    odo dir, cb
 npmupdate = (dir, cb) -> cmd "cd #{dir} && npm update --production", ->
   console.log "   #{'npm\'d'.magenta}      #{dir}"
   cb()
@@ -212,6 +220,9 @@ trydirectory = (dir, cb) ->
   if 'npm' in args
     next.push (cb) -> trynpm dir, cb
     next.push (cb) -> trynpm "#{dir}/web", cb
+  if 'odo' in args
+    next.push (cb) -> tryodo dir, cb
+    next.push (cb) -> tryodo "#{dir}/web", cb
   if 'bower' in args
     next.push (cb) -> trybower dir, cb
     next.push (cb) -> trybower "#{dir}/web", cb
