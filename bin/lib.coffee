@@ -27,6 +27,10 @@ usage = """
    
 """
 
+# We're spinning up many processes so we should increase the max listeners
+process.stdout.setMaxListeners 30
+process.stderr.setMaxListeners 30
+
 for arg in args
   unless arg in ['pull', 'push', 'bower', 'npm', 'status', 'nukenpm', 'nukebower', 'odo']
     console.error usage
