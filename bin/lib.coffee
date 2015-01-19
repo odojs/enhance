@@ -30,6 +30,7 @@ usage = """
 # We're spinning up many processes so we should increase the max listeners
 process.stdout.setMaxListeners 30
 process.stderr.setMaxListeners 30
+execOptions = maxBuffer: 1024 * 600
 
 for arg in args
   unless arg in ['pull', 'push', 'bower', 'npm', 'status', 'nukenpm', 'nukebower', 'odo']
@@ -67,21 +68,21 @@ parallel = (tasks, callback) ->
 
 cmd = (cmd, cb) ->
   #console.log cmd
-  exec cmd, (err, stdout, stderr) ->
+  exec cmd, execOptions, (err, stdout, stderr) ->
     if err?
       console.error "Issue running #{cmd}"
       throw err
     recordstderr stderr if stderr? and stderr isnt ''
     cb stdout
 
-gitpull = (dir, cb) -> exec  "cd #{dir} && git pull", (err, stdout, stderr) ->
+gitpull = (dir, cb) -> exec  "cd #{dir} && git pull", execOptions, (err, stdout, stderr) ->
   if err?
     console.log "   Can't #{'pull'.blue} #{dir}"
   else
     console.log "   #{'pull\'d'.blue}     #{dir}"
   return cb()
 
-gitpush = (dir, cb) -> exec  "cd #{dir} && git push", (err, stdout, stderr) ->
+gitpush = (dir, cb) -> exec  "cd #{dir} && git push", execOptions, (err, stdout, stderr) ->
   if err?
     console.log "   Can't #{'push'.blue} #{dir}"
   else
